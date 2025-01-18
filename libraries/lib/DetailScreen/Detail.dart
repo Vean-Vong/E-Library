@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:libraries/Borrow/BorrowPage%20.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:libraries/Borrow/Borrow.dart';
 import 'package:libraries/dataStore/appState.dart';
 
 class Detail extends StatefulWidget {
   @override
   _DetailState createState() => _DetailState();
+  final String title;
+
+  final String author;
+
+  final String image;
+
+  final String description;
+
+  Detail({
+    required this.title,
+    required this.author,
+    required this.image,
+    required this.description,
+    required String bookName,
+  });
 }
 
 class _DetailState extends State<Detail> {
-  bool _isExpanded = false; // Track whether the description is expanded or not
-
   @override
   Widget build(BuildContext context) {
     final appStateController = Get.find<appState>();
+    final favoriteController = Get.put(appState());
 
     return Scaffold(
       appBar: AppBar(
@@ -23,161 +38,215 @@ class _DetailState extends State<Detail> {
           },
           icon: Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
-        backgroundColor: Color.fromARGB(255, 24, 77, 137),
+        // backgroundColor: Colors.indigo[900],
         title: Text(
-          appStateController.book.value,
-          style: TextStyle(color: Colors.white),
+          'រឿង ${appStateController.book.value}',
+          style: GoogleFonts.freehand(color: Colors.white),
         ),
         actions: [
           Container(
-              padding: EdgeInsets.only(right: 20),
-              child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(
+            padding: EdgeInsets.only(right: 20),
+            child: IconButton(
+              onPressed: () {
+                final selectedBook = appStateController.books.firstWhere(
+                  (book) => book['title'] == appStateController.book.value,
+                  orElse: () => {},
+                );
+                if (selectedBook.isNotEmpty) {
+                  // Check if the book is already in favorites
+                  if (favoriteController.isFavorite(selectedBook
+                      .map((key, value) => MapEntry(key, value.toString())))) {
+                    // Remove from favorites
+                    favoriteController.removeFromFavorites(selectedBook
+                        .map((key, value) => MapEntry(key, value.toString())));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          duration: Duration(milliseconds: 700),
+                          backgroundColor: Colors.indigo[900],
+                          content: Text('Removed from favorites successfully!',
+                              style: TextStyle(color: Colors.white))),
+                    );
+                  } else {
+                    // Add to favorites
+                    favoriteController.addToFavorites(selectedBook
+                        .map((key, value) => MapEntry(key, value.toString())));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          duration: Duration(milliseconds: 700),
+                          backgroundColor: Colors.indigo[900],
+                          content: Text('Added to favorites successfully!',
+                              style: TextStyle(color: Colors.white))),
+                    );
+                  }
+                }
+              },
+              icon: Obx(() {
+                final selectedBook = appStateController.books.firstWhere(
+                  (book) => book['title'] == appStateController.book.value,
+                  orElse: () => {},
+                );
+
+                if (selectedBook.isNotEmpty &&
+                    favoriteController.isFavorite(selectedBook.map(
+                        (key, value) => MapEntry(key, value.toString())))) {
+                  return Icon(
+                    Icons.favorite,
+                    color: Colors
+                        .white, // Change icon color when added to favorites
+                  );
+                } else {
+                  return Icon(
                     Icons.favorite_border,
-                    color: Colors.white,
-                  )))
+                    color: Colors.white, // Default icon color
+                  );
+                }
+              }),
+            ),
+          ),
         ],
       ),
       body: Obx(() {
+        // Find the selected book from the list of books
         final selectedBook = appStateController.books.firstWhere(
-            (book) => book['title'] == appStateController.book.value);
+          (book) => book['title'] == appStateController.book.value,
+          orElse: () => {}, // Return empty map if not found
+        );
 
-        // Get the description text and decide whether to show full or truncated
-        String description = selectedBook['description']!;
-        String displayText = _isExpanded
-            ? description
-            : description.length > 100
-                ? description.substring(0, 600) + '...'
-                : description;
+        // Handle if the book is not found
+        if (selectedBook.isEmpty) {
+          return Center(child: Text("Book not found"));
+        }
+
+        // Use the correct key to access the book's image and other details
+        String bookImage = selectedBook['cover_image'] ?? '';
+        String description = selectedBook['description'] ?? '';
 
         return SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(0),
+            padding: EdgeInsets.all(1),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(1),
-                  child: Image.network(
-                    selectedBook['image']!,
-                    height: MediaQuery.of(context).size.height * 0.4,
-                    width: MediaQuery.of(context).size.width,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                SizedBox(height: 10),
                 Container(
-                  height: 1000,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(50),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.all(0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Divider(
-                            color: Colors.grey,
-                            thickness: 3, // Thickness of the divider
-                            indent: 200, // Space from the left
-                            endIndent: 200, // Space from the right
-                          ),
-                          SizedBox(height: 1),
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Display the book's image
+                      if (bookImage.isNotEmpty)
+                        Image.network(
+                          bookImage,
+                          width: double.infinity,
+                          fit: BoxFit.fitWidth,
+                          height: 250,
+                        )
+                      else
+                        Icon(
+                          Icons.menu_book,
+                          size: 100,
+                          color: Colors.grey,
+                        ),
+                      Divider(
+                        color: Colors.grey,
+                        thickness: 2,
+                        indent: 200,
+                        endIndent: 200,
+                      ),
+
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              ' ${selectedBook['title']}',
+                              style: TextStyle(
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'អ្នកនិពន្ធ: ${selectedBook['author']}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(),
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        child: Column(
+                          children: [
+                            Row(
                               children: [
-                                Text(
-                                  '${selectedBook['title']}',
-                                  style: TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                // Text(
-                                //   ' ${selectedBook['year']}',
-                                //   style: TextStyle(fontSize: 16),
-                                // ),
-                                Text(
-                                  'និពន្ធដោយ: ${selectedBook['author']}',
-                                  style: TextStyle(
-                                      fontSize: 13, color: Colors.grey[700]),
-                                ),
+                                Text('អត្ថបទសង្ខេប',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    )),
                               ],
                             ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _isExpanded = !_isExpanded;
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 8.0, horizontal: 16.0),
-                                  elevation: 1,
-                                ),
-                                child: Text(
-                                  _isExpanded ? "Show Less" : "Read More",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BorrowPage(
-                                        bookTitle: selectedBook['title']!,
-                                        bookImage: selectedBook['image']!,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 10.0, horizontal: 20.0),
-                                  elevation: 1,
-                                ),
-                                child: Text(
-                                  "Borrow Book",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20),
-                          Text(
-                            displayText,
-                            textAlign: TextAlign.justify,
-                            style: TextStyle(fontSize: 17),
-                          ),
-                          SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
+                            SizedBox(height: 10),
+                            Text(
+                              description,
+                              textAlign: TextAlign.justify,
+                              style: TextStyle(fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
                 ),
               ],
+            ),
+          ),
+        );
+      }),
+      bottomNavigationBar: Obx(() {
+        // Ensure the selected book is available for navigation
+        final selectedBook = appStateController.books.firstWhere(
+          (book) => book['title'] == appStateController.book.value,
+          orElse: () => {}, // Return empty map if not found
+        );
+
+        if (selectedBook.isEmpty) {
+          return SizedBox(); // Return empty widget if the book is not found
+        }
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BorrowPage(
+                  bookTitle: selectedBook['title']!,
+                  bookImage: selectedBook['cover_image']!,
+                ),
+              ),
+            );
+          },
+          child: BottomAppBar(
+            shape: CircularNotchedRectangle(),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              child: Container(
+                height: 50,
+                color: Colors.indigo[900],
+                child: Center(
+                  child: Text(
+                    'Borrow Book',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18),
+                  ),
+                ),
+              ),
             ),
           ),
         );

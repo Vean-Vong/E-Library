@@ -11,10 +11,30 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  double _opacity = 0.0;
+
   @override
   void initState() {
     super.initState();
+    _startFadeInAnimation();
+    _startFadeOutAnimation();
     _navigateToHomePage();
+  }
+
+  void _startFadeInAnimation() {
+    Future.delayed(Duration(milliseconds: 100), () {
+      setState(() {
+        _opacity = 1.0;
+      });
+    });
+  }
+
+  void _startFadeOutAnimation() {
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _opacity = 0.0;
+      });
+    });
   }
 
   void _navigateToHomePage() {
@@ -32,39 +52,29 @@ class _SplashState extends State<Splash> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Container(
-          //   decoration: BoxDecoration(
-          //     image: DecorationImage(
-          //       image: AssetImage('assets/images/bg.jpg'),
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          //   child: BackdropFilter(
-          //     filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-          //     child: Container(
-          //       color: Colors.black.withOpacity(0.3),
-          //     ),
-          //   ),
-          // ),
-          // Logo and Text
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.network(
-                  'assets/images/Logo.png',
-                  width: 300,
-                ),
-                Text(
-                  'E-Libraries',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
+            child: AnimatedOpacity(
+              duration: Duration(seconds: 3),
+              opacity: _opacity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.network(
+                    'assets/images/Logo.png',
+                    width: 300,
                   ),
-                ),
-              ],
+                  SizedBox(height: 20),
+                  Text(
+                    'E-Libraries',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

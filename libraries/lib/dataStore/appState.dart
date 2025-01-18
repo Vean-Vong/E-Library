@@ -1,64 +1,96 @@
 import 'package:get/get.dart';
 
 class appState extends GetxController {
-  var book = ''.obs;
-  var books = [
+  // Books store from SQl database
+
+  var book = ''.obs; // To store the selected book title
+  var books = <Map<String, dynamic>>[].obs; // List to store all the books
+
+  var favoriteBooks = <Map<String, String>>[].obs;
+
+  // Add a book to favorites
+  void addToFavorites(Map<String, String> book) {
+    favoriteBooks.add(book);
+  }
+
+  // Remove a book from favorites
+  void removeFromFavorites(Map<String, String> book) {
+    favoriteBooks.removeWhere((item) => item['title'] == book['title']);
+  }
+
+  // Check if the book is in favorites
+  bool isFavorite(Map<String, String> book) {
+    return favoriteBooks.any((item) => item['title'] == book['title']);
+  }
+
+  // Define the userId getter
+  final userId = ''.obs;
+
+// Store Username
+  var username = '';
+
+// Books Store for offline
+  var bookStore = '';
+  var bookStores = [
     {
-      'title': 'កុលាបប៉ៃលិន',
-      'author': 'ញ៉ុក ថែម',
-      'year': '2024',
-      'image': 'assets/images/j.jpg',
-      'description':
-          ' នៅក្នុងផ្ទះចាស់ប្រក់ក្បឿងមួយខ្នងតាចឺមដែលជាឪពុកចៅចិត្រនៅស្រុកស្វាយប៉ោ ខេត្ត​បាត់ដំបង ជាត្រកូលសិរីពង្សកំពុងតែដេកស្តូកស្តឹងនៅលើគ្រែ ទោះបីលោកគ្រូពេទ្យស្អាតខំប្រឹង​ព្យាបាលយ៉ាងណាក៏ពុំអាចជាសះស្បើយឡើយ។ មុននឹងស្លាប់ទៅគាត់បានផ្តែផ្តាំចៅចិត្រនូវគា​ថា​មួយបទថា "អត្តាហិ អត្តនោ នាថោ"។ ក្រោយពីឪពុកស្លាប់ទៅ លោកគ្រូពេទ្យស្អាតក៏បានណែនាំឲ្យចៅចិត្រទៅធ្វើជាកម្មករនៅប៉ៃ​លិននៅផ្ទះលោកហ្លួងរតនសម្បត្តិ ដែលជាឪពុកមារបស់លោក។ បានសំបុត្រពីគ្រូពេទ្យស្អាត​ហើយ ចៅចិត្រក៏ធ្វើដំណើរទៅប៉ៃលិន ហើយក៏បានលោកហ្លួងរតនសម្បត្តិទទួលឲ្យនៅជាមួយ​ធ្វើ​ជាកម្មករត្បូង។ តាំងពីនោះមកចៅចិត្រខិតខំធ្វើការជាកម្មករជីកត្បូងឥតមានខ្ជិលច្រអូស ឬទម្រន់ឡើយ ជា​ហេតុបណ្តាលឲ្យលោកហ្លួងរតនាសម្បត្តិពេញចិត្តយ៉ាងខ្លាំង។ ចំណែកពួកកម្មករដទៃទៀតក៏មាន​ការពេញចិត្ត ស្រឡាញ់រាប់អានចៅចិត្រគ្រប់ៗគ្នា។ យប់មួយចៅចិត្រច្រៀងបទយុវាភិរម្យនៅក្នុង​ខ្ទមរបស់ខ្លួន។ សំឡេងចម្រៀងធ្វើឲ្យឃុននារីដែលបានចុះមកកំសាន្តក្នុងសួនលឺទ្រាំពីរោះមិនបាន ក៏បណ្តាលឲ្យចូលទៅក្នុងលំនៅតូចរបស់ចៅចិត្រ។ ឃុននារីនិងចៅចិត្រសន្ទនាគ្នាជាពាក្យផ្តោះ​ផ្តងផ្សេងៗ ហើយគេក៏ចេញទៅទីវាលសួនច្បារសំណេះសំណាលរាក់ទាក់ទៅតាមមនោគតិរបស់​គេរៀងៗខ្លួន។ លុះស្អែកឡើង ពេលព្រឹកវេលាដែលចៅចិត្រទៅជីកត្បូង គេមានភ័ព្វបានជួយរវៃឡានម្ចាស់​របស់គេដែលបម្រុងទៅស្រុកសង្កែ ទទួលលោកបាឡាត់ស្រុក។ តាសុនអ្នកបើករថយន្ត កាលបើ​ឃើញចៅចិត្រចេះបើកឡាន គាត់ក៏សុំច្បាប់មួយពេលព្រោះជាប់ធុរៈ។ លោករតនសម្បត្តិក៏ព្រម​ឲ្យ​ចៅចិត្រជំនួសតាសុន។ ក្នុងការស្នាក់ជូនដំណើរចៅហ្វាយទៅដល់ស្រុកសង្កែ ចៅចិត្របានកាន់កន្ត្រកដើរតាមក្រោយ​ឃុននារីទៅផ្សារទិញឥវ៉ាន់......។ ទិញឥវ៉ាន់សព្វគ្រប់អស់ហើយឃុននារី និងចៅចិត្រក៏ត្រឡប់ក៏​ត្រឡប់មកទទួលរតនសម្បត្តិ និងលោកបាឡាត់ស្រុកវិលទៅប៉ៃលិនវិញ។ តែអកុសលមកដល់​ពាក់កណ្តាលផ្លូវឡានក៏ខូចបណ្តាលឲ្យមានការទាស់សម្តីខ្លះរវាងចៅចិត្រ និងលោកបាឡាត់ព្រោះ​ម្នាក់ៗសុទ្ធតែប្រច័ណ្ឌទៅលើសម្រស់នាងឃុននារី។ ក្នុងការស្នាក់នៅកណ្តាលព្រៃចៅចិត្រ និងចៅហ្វាយក្រមុំនេះនិយាយផ្តោះផ្តងគ្នារហូតយល់​ចិត្តយល់ថ្លើមគ្នាខ្លះ។ រំពេចនោះ ស្រាប់តែមានចោរមួយក្រុមចេញមកប្លន់។ ចៅចិត្របានតតាំង​ប្រយុទ្ធជាមួយពួកចោរដោយអង់អាចបណ្តាលឲ្យពួកចោរត្រូវរបួសជាច្រើននាក់ ចំណែកចៅចិត្រ​ក៏ត្រូវគ្រាប់សន្លប់បាត់ស្មារតី។ ក្រោយការរងរបួស គេបាននាំចៅចិត្រមកព្យាបាលក្នុងមន្ទីរពេទ្យ​ដោយមានការជួយជ្រោមជ្រែងពីលោកហ្លួងរតនសម្បត្តិ។ ដោយការខិតខំព្យាបាលជម្ងឹពីគ្រូពេទ្យ និងការយកចិត្តទុកដាក់ថែទាំយ៉ាងដិលដល់ពីឃុននារី ចៅចិត្រក៏បានសះស្បើយវិញ។ ចាប់តាំងពី​ថ្ងៃនោះមកចៅចិត្រ និងឃុននារីក៏បានយល់ចិត្តគ្នាហើយស្រឡាញ់គ្នាកាន់តែខ្លាំងឡើង ឯចរិត​ឆ្មើង​ឆ្មៃរបស់ឃុននារីក៏សាបសូន្យក្នុងគ្រានោះដែរ។ ដោយសារគុណសម្បត្តិដ៏ថ្លៃថ្លារបស់ចៅចិត្រ លោកហ្លួងរតនសម្បត្តិក៏បានតែងតាំងចៅចិត្រ​ឲ្យ​កាន់បញ្ជីមើលការខុសត្រូវត្រួតមើលត្បូងវិញម្តងគឺឈប់ឲ្យធ្វើជាកម្មករទៀតហើយ។ ថ្ងៃមួយលោកបាឡាត់ស្រុកសង្កែបាននាំចៅកែផាន់ចូលមកផ្ទះលោករតនសម្បត្តិដើម្បីសុំ​ទិញ​ត្បូង។ ក្រោយការបង្ហាញត្បូងឲ្យមើលម្ចាស់ផ្ទះបានព្រមទទួលនាំថៅកែថ្មីនេះទៅមើលអណ្តូង​ជីក​ត្បូងជាមួយចៅចិត្រទុកឲ្យឃុននារី និងលោកបាឡាត់នៅក្នុងផ្ទះ។ ដោយសេចក្តីស្នេហាឥតព្រំដែន​លោកបាឡាត់បានចាប់នាងឃុននារីរំលោភ។ ចៅចិត្រមកទាន់​វាយលោកបាឡត់ដួល...។ លោក​រតនសម្បត្តិព្រមលើកលែងទោសឲ្យលោកបាឡាត់ និងថៅកែផាន់តែបានព្រមានឈប់ឲ្យមកជាន់​ទីនេះទៀត។  ក្នុងរាត្រីនោះ វេលាដែលចៅចិត្រកំពុងបណ្តែតអារម្មណ៍ក្នុងបន្ទប់ស្រាប់តែលឺសំឡេងចោរ​ចូលមកប្លន់ផ្ទះលោករតនៈ។ ក្រុមកម្មករតស៊ូនៅខាងក្រោម ឯចៅចិត្រឡើងឡើងទៅលើផ្ទះ​ប្រទះ​មេចោរគឺថៅកែផាន់ ហើយបានប្រយុទ្ធគ្នាយ៉ាងយូរទើបអាចសម្លាប់ចោរនេះបាន។ ចំណែក​លោក​បាឡាត់ស្រុកកំពុងប្រវាយចាប់យកឃុននារី ក៏ត្រូវចៅចិត្រសម្លាប់បានទៀត។ ក្នុងរាត្រីនោះ វេលាដែលចៅចិត្រកំពុងបណ្តែតអារម្មណ៍ក្នុងបន្ទប់ស្រាប់តែលឺសំឡេងចោរ​ចូលមកប្លន់ផ្ទះលោករតនៈ។ ក្រុមកម្មករតស៊ូនៅខាងក្រោម ឯចៅចិត្រឡើងទៅលើផ្ទះប្រទះ​មេចោរគឺថៅកែផាន់ ហើយបានប្រយុទ្ធគ្នាយ៉ាងយូរទើបអាចសម្លាប់ចោរបាន។ ចំណែកលោកបា​ឡាត់ស្រុកកំពុងប្រវាយចាប់យកឃុននារី​ ក៏ត្រូវចៅចិត្រសម្លាប់បានទៀត។ '
+      'title': 'BTTH',
+      'author': 'Heavenly Silkworm Potato',
+      'description': 'A wonderful book about Flutter development.',
+      'image': 'assets/images/XiaoYan.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Jade Dynasty',
+      'author': 'Ching Siu-tung',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/XiaoFan.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Renegade Immortal',
+      'author': 'Er Gen',
+      'description': 'A wonderful book about Flutter development.',
+      'image': 'assets/images/WangLin.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Lin Dong',
+      'author': 'John Doe',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/LinDong.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Soul Land',
+      'author': 'Tang Jia San Shao',
+      'description': 'A wonderful book about Flutter development.',
+      'image': 'assets/images/TangSan.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Perfect World',
+      'author': 'Rie Aruga',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/ShiHao.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Throne of Seal',
+      'author': 'Tang Jia San Shao',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/HaoChen.jpg',
     },
     {
-      'title': 'ផ្កាស្រពោន',
-      'author': 'Vean Vong',
-      'year': '2023',
-      'image': 'assets/images/p.jpg',
-      'description': 'A modern tale of adventure and discovery.'
+      'title': 'Soul Land 2',
+      'author': 'Tang Jia San Shao',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/Souland2.jpg',
     },
-  ].obs;
+    {
+      'title': 'The Great Ruler',
+      'author': 'Tian Can Tu Dou',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/MuChen.jpg',
+    },
+    {
+      'title': 'Swallowed Star',
+      'author': 'Wo Chi Xi Hong Shi',
+      'description': 'Learn how to build amazing mobile apps.',
+      'image': 'assets/images/LouFeng.jpg',
+    },
+  ];
 }

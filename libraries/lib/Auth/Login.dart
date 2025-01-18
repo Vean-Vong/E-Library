@@ -1,4 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:libraries/Service_api/Auth_Service.dart';
+import 'package:libraries/dataStore/appState.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -6,184 +11,173 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  bool isLoading = false;
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> loginPressed() async {
+    if (_formKey.currentState?.validate() != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await AuthServices.login(
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
+        Get.find<appState>().username = _usernameController.text.trim(),
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login successful!',
+                style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.indigo[900],
+          ),
+        );
+
+        // Navigate to the home screen
+        Navigator.pushNamed(context, '/HomeScreen');
+      } else {
+        final responseMap = jsonDecode(response.body);
+        final errorMessage = responseMap['message'] ?? 'Login failed';
+        _showErrorSnackBar(errorMessage);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorSnackBar("An error occurred. Please try again.");
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/Logo.png',
-                    width: 200,
-                    fit: BoxFit.contain,
-                  ),
-                  Text(
-                    'Login',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Form(
-                    key: _formKey,
-                    child: Container(
-                      padding: EdgeInsets.all(50),
-                      height: 455,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(100),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 50),
+              Image.asset(
+                'assets/images/Logo.png',
+                width: 200,
+                fit: BoxFit.contain,
+              ),
+              Text(
+                'Welcome Back!',
+                style: GoogleFonts.adamina(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20),
+              Form(
+                key: _formKey,
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildTextFormField(
+                        label: 'Username',
+                        hintText: 'Enter your username',
+                        icon: Icon(Icons.person),
+                        controller: _usernameController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your username';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
+                      _buildTextFormField(
+                        label: 'Password',
+                        hintText: 'Enter your password',
+                        icon: Icon(Icons.lock),
+                        controller: _passwordController,
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters long';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 30),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : loginPressed,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.indigo[900],
+                          ),
+                          child: _isLoading
+                              ? CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  'Login',
+                                  style: GoogleFonts.adamina(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
+                                ),
                         ),
                       ),
-                      child: Column(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildTextFormField(
-                            label: 'Email',
-                            hintText: 'Enter your email',
-                            icon: Icon(Icons.email),
-                            controller: _emailController,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              // Email validation logic (optional regex)
-                              if (!RegExp(
-                                      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-                                  .hasMatch(value)) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
+                          Text("Don't have an account?"),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/Register');
                             },
-                          ),
-                          SizedBox(height: 20),
-                          _buildTextFormField(
-                            label: 'Password',
-                            hintText: 'Enter your password',
-                            icon: Icon(Icons.lock),
-                            controller: _passwordController,
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters long';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 30),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () async {
-                                      if (_formKey.currentState?.validate() ??
-                                          false) {
-                                        setState(() {
-                                          isLoading = true;
-                                        });
-
-                                        try {
-                                          // Simulate a delay for demonstration
-                                          await Future.delayed(
-                                              Duration(seconds: 2));
-
-                                          if (mounted) {
-                                            // Ensure the widget is still mounted before calling setState
-                                            setState(() {
-                                              isLoading = false;
-                                            });
-                                          }
-
-                                          // Handle login result here
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text('Login Successful'),
-                                            ),
-                                          );
-                                          Navigator.pushNamed(
-                                              context, '/HomeScreen');
-                                        } catch (e) {
-                                          if (mounted) {
-                                            // Ensure the widget is still mounted before calling setState
-                                            setState(() {
-                                              isLoading = false;
-                                            });
-                                          }
-
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text('Login Failed: $e'),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 20),
-                                  textStyle: TextStyle(
-                                      fontSize: 16.0,
-                                      fontWeight: FontWeight.bold),
-                                  backgroundColor: Colors.black),
-                              child: isLoading
-                                  ? CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      'Login',
-                                    ),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Do not have an account yet?'),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/Register');
-                                },
-                                child: Text('Register Here!'),
-                              ),
-                            ],
+                            child: Text('Register Here!'),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  TextFormField _buildTextFormField({
+  Widget _buildTextFormField({
     required String label,
     required String hintText,
     required Icon icon,
